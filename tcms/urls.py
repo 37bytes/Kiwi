@@ -8,7 +8,7 @@ from django.conf import settings
 from django.conf.urls import include
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import re_path
+from django.urls import re_path, path
 from django.views.generic import TemplateView
 from django.views.i18n import JavaScriptCatalog
 from grappelli import urls as grappelli_urls
@@ -51,6 +51,7 @@ urlpatterns = [
     re_path(r"^jsi18n/$", JavaScriptCatalog.as_view(), name="javascript-catalog"),
 ]
 
+urlpatterns.append(path('', include('social_django.urls', namespace='social')))
 
 # conditional import b/c this App can be disabled
 if "tcms.bugs.apps.AppConfig" in settings.INSTALLED_APPS:

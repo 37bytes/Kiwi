@@ -22,3 +22,5 @@ python-gitlab==3.11.0
 python-redmine==2.3.0
 topicaxis-opengraph==0.5
 tzdata==2022.6
+social-auth-app-django
+social-auth-core[openidconnect]
