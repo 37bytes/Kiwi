@@ -1,11 +1,9 @@
+import { populateVersion } from '../../../../static/js/utils'
+
 /*
     Used in mutable.html and clone.html
 */
-$(() => {
-    if ($('#page-testplans-mutable').length === 0) {
-        return
-    }
-
+export function pageTestplansMutableReadyHandler () {
     if ($('#id_version').find('option').length === 0) {
         populateVersion()
     }
@@ -18,10 +16,6 @@ $(() => {
         return showRelatedObjectPopup(this)
     })
 
-    $('.selectpicker').selectpicker()
-
-    $('.bootstrap-switch').bootstrapSwitch()
-
     document.getElementById('id_product').onchange = function () {
         $('#id_product').selectpicker('refresh')
         populateVersion()
@@ -30,4 +24,4 @@ $(() => {
     document.getElementById('id_version').onchange = function () {
         $('#id_version').selectpicker('refresh')
     }
-})
+}

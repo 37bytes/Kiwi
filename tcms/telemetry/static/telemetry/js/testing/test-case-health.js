@@ -1,13 +1,9 @@
-$(() => {
-    if ($('#page-telemetry-test-case-health').length === 0) {
-        return
-    }
+import { dataTableJsonRPC } from '../../../../../static/js/jsonrpc'
 
-    $('[data-toggle="tooltip"]').tooltip()
+let table
 
-    loadInitialProduct()
-
-    const table = $('#test-case-health-table').DataTable({
+export function initializePage () {
+    table = $('#test-case-health-table').DataTable({
         ajax: function (data, callback, settings) {
             const query = {}
 
@@ -70,33 +66,11 @@ $(() => {
             zeroRecords: 'No records found'
         }
     })
+}
 
-    document.getElementById('id_product').onchange = () => {
-        updateVersionSelectFromProduct()
-        // note: don't call table.ajax.reload() here to avoid calling it twice
-        // b/c update_version_select... triggers .onchange()
-        updateTestPlanSelectFromProduct()
-    }
-
-    document.getElementById('id_version').onchange = () => {
-        updateBuildSelectFromVersion(true)
-        table.ajax.reload()
-    }
-
-    document.getElementById('id_build').onchange = () => {
-        table.ajax.reload()
-    }
-    document.getElementById('id_test_plan').onchange = () => {
-        table.ajax.reload()
-    }
-
-    $('#id_after').on('dp.change', () => {
-        table.ajax.reload()
-    })
-    $('#id_before').on('dp.change', () => {
-        table.ajax.reload()
-    })
-})
+export function reloadTable () {
+    table.ajax.reload()
+}
 
 function renderTestCaseColumn (data) {
     return `<a href="/case/${data.case_id}">TC-${data.case_id}</a>: ${data.case_summary}`
@@ -115,7 +89,7 @@ function renderVisualPercent (data) {
 
     const colors = []
     const step = 20
-    for (i = 0; i < 5; i++) {
+    for (let i = 0; i < 5; i++) {
         if (failPercent > i * step) {
             colors.push('#cc0000') // pf-red-100
         } else {

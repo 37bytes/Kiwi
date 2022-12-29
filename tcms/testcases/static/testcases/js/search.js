@@ -1,4 +1,11 @@
-function preProcessData (data, callback) {
+import { dataTableJsonRPC, jsonRPC } from '../../../../static/js/jsonrpc'
+import {
+    escapeHTML, updateComponentSelectFromProduct, updateCategorySelectFromProduct,
+    updateParamsToSearchTags, updateTestPlanSelectFromProduct
+} from '../../../../static/js/utils'
+import { hookIntoPagination } from '../../../../static/js/pagination'
+
+function preProcessData (data, callbackF) {
     const caseIds = []
     data.forEach(function (element) {
         caseIds.push(element.id)
@@ -47,19 +54,15 @@ function preProcessData (data, callback) {
                 }
             })
 
-            callback({ data }) // renders everything
+            callbackF({ data }) // renders everything
         })
     })
 }
 
-$(() => {
-    if ($('#page-testcases-search').length === 0) {
-        return
-    }
-
+export function pageTestcasesSearchReadyHandler () {
     const table = $('#resultsTable').DataTable({
         pageLength: $('#navbar').data('defaultpagesize'),
-        ajax: function (data, callback, settings) {
+        ajax: function (data, callbackF, settings) {
             const params = {}
 
             if ($('#id_summary').val()) {
@@ -122,7 +125,7 @@ $(() => {
 
             updateParamsToSearchTags('#id_tag', params)
 
-            dataTableJsonRPC('TestCase.filter', params, callback, preProcessData)
+            dataTableJsonRPC('TestCase.filter', params, callbackF, preProcessData)
         },
         select: {
             className: 'success',
@@ -220,9 +223,7 @@ $(() => {
         $(this).parents('.bootstrap-select').toggleClass('open')
     })
 
-    $('.selectpicker').selectpicker()
-
     if (window.location.href.indexOf('product') > -1) {
         $('#id_product').change()
     }
-})
+}

@@ -1,33 +1,7 @@
-$(() => {
-    if ($('#page-telemetry-execution-trends').length === 0) {
-        return
-    }
+import { jsonRPC } from '../../../../../static/js/jsonrpc'
+import { showOnlyRoundNumbers } from './utils'
 
-    $('[data-toggle="tooltip"]').tooltip()
-
-    loadInitialProduct()
-
-    document.getElementById('id_product').onchange = () => {
-        updateVersionSelectFromProduct()
-        // note: don't pass drawChart as callback to avoid calling it twice
-        // b/c update_version_select... triggers .onchange()
-        updateTestPlanSelectFromProduct()
-    }
-
-    document.getElementById('id_version').onchange = () => {
-        drawChart()
-        updateBuildSelectFromVersion(true)
-    }
-    document.getElementById('id_build').onchange = drawChart
-    document.getElementById('id_test_plan').onchange = drawChart
-
-    $('#id_after').on('dp.change', drawChart)
-    $('#id_before').on('dp.change', drawChart)
-
-    drawChart()
-})
-
-function drawChart () {
+export function drawChart () {
     const query = {}
 
     const productIds = $('#id_product').val()

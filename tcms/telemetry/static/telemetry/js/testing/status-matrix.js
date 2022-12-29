@@ -1,3 +1,5 @@
+import { jsonRPC } from '../../../../../static/js/jsonrpc'
+
 let table
 const initialColumn = {
     data: null,
@@ -11,54 +13,25 @@ const initialColumn = {
     }
 }
 
-$(() => {
-    if ($('#page-telemetry-status-matrix').length === 0) {
-        return
-    }
-
-    $('[data-toggle="tooltip"]').tooltip()
-
-    loadInitialProduct()
-
-    document.getElementById('id_product').onchange = () => {
-        updateVersionSelectFromProduct()
-        // note: don't pass drawTable as callback to avoid calling it twice
-        // b/c update_version_select... triggers .onchange()
-        updateTestPlanSelectFromProduct()
-    }
-
-    document.getElementById('id_version').onchange = () => {
-        drawTable()
-        updateBuildSelectFromVersion(true)
-    }
-
-    document.getElementById('id_build').onchange = drawTable
-    document.getElementById('id_test_plan').onchange = drawTable
+export function initializePage () {
     document.getElementById('id_order').onchange = drawTable
     document.getElementById('id_include_child_tps').onchange = drawTable
-
-    $('#id_after').on('dp.change', drawTable)
-    $('#id_before').on('dp.change', drawTable)
-
-    drawTable()
 
     $('#table').on('draw.dt', function () {
         setMaxHeight($(this))
     })
 
-    $('.bootstrap-switch').bootstrapSwitch()
-})
-
-$(window).on('resize', function () {
-    setMaxHeight($('#table'))
-})
+    $(window).on('resize', function () {
+        setMaxHeight($('#table'))
+    })
+}
 
 function setMaxHeight (t) {
     const maxH = 0.99 * (window.innerHeight - t.position().top)
     t.css('max-height', maxH)
 }
 
-function drawTable () {
+export function drawTable () {
     $('.js-spinner').show()
     if (table) {
         table.destroy()
@@ -165,7 +138,7 @@ function applyStyleToCell (cell) {
         if (cellChildren) {
             const el = cellChildren[0]
             if (el && el.attributes.color) {
-                color = el.attributes.color.nodeValue
+                const color = el.attributes.color.nodeValue
                 $(cell[1]).attr('style', `border-left: 5px solid ${color}`)
                 if (el.attributes['from-parent'].nodeValue === 'true') {
                     $(cell[1]).addClass('danger')

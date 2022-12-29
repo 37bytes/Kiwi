@@ -1,3 +1,16 @@
+import { fetchBugDetails } from '../../../../static/js/bugs'
+import { jsonRPC } from '../../../../static/js/jsonrpc'
+import { propertiesCard } from '../../../../static/js/properties'
+import { tagsCard } from '../../../../static/js/tags'
+import {
+    advancedSearchAndAddTestCases, animate,
+    arrayToDict, bindDeleteCommentButton,
+    changeDropdownSelectedItem, currentTimeWithTimezone,
+    markdown2HTML, renderCommentsForObject, renderCommentHTML,
+    quickSearchAndAddTestCase, treeViewBind
+} from '../../../../static/js/utils'
+import { initSimpleMDE } from '../../../../static/js/simplemde_security_override'
+
 const allExecutionStatuses = {}
 const allExecutions = {}
 const expandedExecutionIds = []
@@ -8,17 +21,10 @@ const permissions = {
 }
 const autocompleteCache = {}
 
-$(() => {
-    if ($('#page-testruns-get').length === 0) {
-        return
-    }
-
+export function pageTestrunsGetReadyHandler () {
     permissions.removeTag = $('#test_run_pk').data('perm-remove-tag') === 'True'
     permissions.addComment = $('#test_run_pk').data('perm-add-comment') === 'True'
     permissions.removeComment = $('#test_run_pk').data('perm-remove-comment') === 'True'
-
-    $('.bootstrap-switch').bootstrapSwitch()
-    $('.selectpicker').selectpicker()
 
     const testRunId = $('#test_run_pk').data('pk')
 
@@ -234,7 +240,7 @@ $(() => {
             $(event.target).parents('tr').hide()
         })
     })
-})
+}
 
 function filterTestExecutionsByProperty (runId, executions, filterBy, filterValue) {
     // no input => show all rows

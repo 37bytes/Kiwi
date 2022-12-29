@@ -1,8 +1,6 @@
-$(() => {
-    if ($('#page-bugs-mutable').length === 0) {
-        return
-    }
+import { populateBuild, populateVersion } from '../../../../static/js/utils'
 
+export function pageBugsMutableReadyHandler () {
     $('#add_id_product').click(function () {
         return showRelatedObjectPopup(this)
     })
@@ -41,4 +39,4 @@ $(() => {
     if ($('#id_version').find('option').length === 0) {
         populateVersion()
     }
-})
+}

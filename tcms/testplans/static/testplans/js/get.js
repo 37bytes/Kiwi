@@ -1,3 +1,14 @@
+import { jsonRPC } from '../../../../static/js/jsonrpc'
+import { tagsCard } from '../../../../static/js/tags'
+import {
+    animate,
+    advancedSearchAndAddTestCases,
+    bindDeleteCommentButton,
+    markdown2HTML, renderCommentsForObject, renderCommentHTML,
+    treeViewBind, quickSearchAndAddTestCase
+} from '../../../../static/js/utils'
+import { initSimpleMDE } from '../../../../static/js/simplemde_security_override'
+
 const expandedTestCaseIds = []
 const fadeAnimationTime = 500
 
@@ -6,11 +17,7 @@ const autocompleteCache = {}
 
 const confirmedStatuses = []
 
-$(() => {
-    if ($('#page-testplans-get').length === 0) {
-        return
-    }
-
+export function pageTestplansGetReadyHandler () {
     const testPlanDataElement = $('#test_plan_pk')
     const testPlanId = testPlanDataElement.data('testplan-pk')
 
@@ -58,7 +65,7 @@ $(() => {
             $('#test_plan_pk').data('trans-error-adding-cases')
         )
     })
-})
+}
 
 function addTestCaseToPlan (planId) {
     const caseName = $('#search-testcase')[0].value
@@ -414,7 +421,7 @@ function updateTestCasesViaAPI (testCaseIds, updateQuery, testPlanId, permission
             const testCaseRow = $(`.js-testcase-row[data-testcase-pk=${caseId}]`)
 
             // update internal data
-            sortkey = allTestCases[caseId].sortkey
+            const sortkey = allTestCases[caseId].sortkey
             allTestCases[caseId] = updatedTC
             // note: updatedTC doesn't have sortkey information
             allTestCases[caseId].sortkey = sortkey

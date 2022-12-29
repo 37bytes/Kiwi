@@ -1,8 +1,8 @@
-$(() => {
-    if ($('#page-bugs-search').length === 0) {
-        return
-    }
+import { dataTableJsonRPC } from '../../../../static/js/jsonrpc'
+import { hookIntoPagination } from '../../../../static/js/pagination'
+import { escapeHTML, updateBuildSelectFromVersion, updateVersionSelectFromProduct } from '../../../../static/js/utils'
 
+export function pageBugsSearchReadyHandler () {
     const table = $('#resultsTable').DataTable({
         pageLength: $('#navbar').data('defaultpagesize'),
         ajax: function (data, callback, settings) {
@@ -96,8 +96,4 @@ $(() => {
     $('#id_version').change(function () {
         updateBuildSelectFromVersion(true)
     })
-
-    $('.bootstrap-switch').bootstrapSwitch()
-
-    $('.selectpicker').selectpicker()
-})
+}

@@ -1,10 +1,7 @@
-$(() => {
-    if ($('#page-testruns-mutable').length === 0) {
-        return
-    }
+import { jsonRPC } from '../../../../static/js/jsonrpc'
+import { updateSelect, updateTestPlanSelectFromProduct } from '../../../../static/js/utils'
 
-    $('[data-toggle="tooltip"]').tooltip()
-
+export function pageTestrunsMutableReadyHandler () {
     document.getElementById('id_product').onchange = () => {
         $('#id_product').selectpicker('refresh')
         updateTestPlanSelectFromProduct(() => {})
@@ -32,6 +29,4 @@ $(() => {
     $('#add_id_build').click(function () {
         return showRelatedObjectPopup(this)
     })
-
-    $('.selectpicker').selectpicker()
-})
+}

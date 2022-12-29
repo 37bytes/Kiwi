@@ -1,4 +1,11 @@
-function preProcessData (data, callback) {
+import { dataTableJsonRPC, jsonRPC } from '../../../../static/js/jsonrpc'
+import {
+    escapeHTML,
+    updateParamsToSearchTags, updateVersionSelectFromProduct
+} from '../../../../static/js/utils'
+import { hookIntoPagination } from '../../../../static/js/pagination'
+
+function preProcessData (data, callbackF) {
     const planIds = []
     data.forEach(function (element) {
         planIds.push(element.id)
@@ -27,18 +34,14 @@ function preProcessData (data, callback) {
             }
         })
 
-        callback({ data }) // renders everything
+        callbackF({ data }) // renders everything
     })
 }
 
-$(() => {
-    if ($('#page-testplans-search').length === 0) {
-        return
-    }
-
+export function pageTestplansSearchReadyHandler () {
     const table = $('#resultsTable').DataTable({
         pageLength: $('#navbar').data('defaultpagesize'),
-        ajax: function (data, callback, settings) {
+        ajax: function (data, callbackF, settings) {
             const params = {}
 
             if ($('#id_name').val()) {
@@ -77,14 +80,14 @@ $(() => {
 
             params.is_active = $('#id_active').is(':checked')
 
-            dataTableJsonRPC('TestPlan.filter', params, callback, preProcessData)
+            dataTableJsonRPC('TestPlan.filter', params, callbackF, preProcessData)
         },
         columns: [
             { data: 'id' },
             {
                 data: null,
                 render: function (data, type, full, meta) {
-                    result = '<a href="/plan/' + data.id + '/">' + escapeHTML(data.name) + '</a>'
+                    let result = '<a href="/plan/' + data.id + '/">' + escapeHTML(data.name) + '</a>'
                     if (!data.is_active) {
                         result = '<strike>' + result + '</strike>'
                     }
@@ -115,8 +118,4 @@ $(() => {
     })
 
     $('#id_product').change(updateVersionSelectFromProduct)
-
-    $('.bootstrap-switch').bootstrapSwitch()
-
-    $('.selectpicker').selectpicker()
-})
+}

@@ -1,4 +1,13 @@
-function preProcessData (data, callback) {
+import { dataTableJsonRPC, jsonRPC } from '../../../../static/js/jsonrpc'
+import {
+    arrayToDict, escapeHTML,
+    updateParamsToSearchTags,
+    updateVersionSelectFromProduct, updateBuildSelectFromVersion
+} from '../../../../static/js/utils'
+
+import { hookIntoPagination } from '../../../../static/js/pagination'
+
+function preProcessData (data, callbackF) {
     const runIds = []
     const planIds = []
     data.forEach(function (element) {
@@ -34,19 +43,15 @@ function preProcessData (data, callback) {
                 element.product_name = products[element.plan__product].name
             })
 
-            callback({ data }) // renders everything
+            callbackF({ data }) // renders everything
         })
     })
 }
 
-$(() => {
-    if ($('#page-testruns-search').length === 0) {
-        return
-    }
-
+export function pageTestrunsSearchReadyHandler () {
     const table = $('#resultsTable').DataTable({
         pageLength: $('#navbar').data('defaultpagesize'),
-        ajax: function (data, callback, settings) {
+        ajax: function (data, callbackF, settings) {
             const params = {}
 
             if ($('#id_summary').val()) {
@@ -113,14 +118,14 @@ $(() => {
 
             params.stop_date__isnull = $('#id_running').is(':checked')
 
-            dataTableJsonRPC('TestRun.filter', params, callback, preProcessData)
+            dataTableJsonRPC('TestRun.filter', params, callbackF, preProcessData)
         },
         columns: [
             { data: 'id' },
             {
                 data: null,
                 render: function (data, type, full, meta) {
-                    result = '<a href="/runs/' + data.id + '/">' + escapeHTML(data.summary) + '</a>'
+                    let result = '<a href="/runs/' + data.id + '/">' + escapeHTML(data.summary) + '</a>'
                     if (data.stop_date) {
                         result += '<p class="help-block">' + data.stop_date + '</p>'
                     }
@@ -163,8 +168,4 @@ $(() => {
     $('#id_version').change(function () {
         updateBuildSelectFromVersion(true)
     })
-
-    $('.bootstrap-switch').bootstrapSwitch()
-
-    $('.selectpicker').selectpicker()
-})
+}

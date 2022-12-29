@@ -1,10 +1,8 @@
-$(() => {
-    if ($('#page-testcases-mutable').length === 0) {
-        return
-    }
+import { updateCategorySelectFromProduct } from '../../../../static/js/utils'
 
+export function pageTestcasesMutableReadyHandler () {
     $('#text_templates').change(function () {
-        markdownEditor.codemirror.setValue($(this).val())
+        window.markdownEditor.codemirror.setValue($(this).val())
     })
 
     if ($('#id_category').find('option').length === 0) {
@@ -27,10 +25,7 @@ $(() => {
     document.getElementById('id_category').onchange = function () {
         $('#id_category').selectpicker('refresh')
     }
-
-    $('.selectpicker').selectpicker()
-    $('.bootstrap-switch').bootstrapSwitch()
-})
+}
 
 function populateProductCategory () {
     const productId = $('#id_product').val()

@@ -1,25 +1,12 @@
-$(() => {
-    if ($('#page-telemetry-testing-breakdown').length === 0) {
-        return
-    }
+import { jsonRPC } from '../../../../../static/js/jsonrpc'
+import { showOnlyRoundNumbers } from './utils'
 
-    $('.selectpicker').selectpicker()
-    $('[data-toggle="tooltip"]').tooltip()
-
-    loadInitialProduct(reloadCharts)
-
-    $('#id_after').on('dp.change', reloadCharts)
-    $('#id_before').on('dp.change', reloadCharts)
-    document.getElementById('id_test_plan').onchange = reloadCharts
-    document.getElementById('id_product').onchange = () => {
-        updateTestPlanSelectFromProduct(reloadCharts)
-    }
-
-    // not relevant in this context
+export function initializePage () {
+    // widget not relevant in this context
     $('#version_and_build').hide()
-})
+}
 
-function reloadCharts () {
+export function reloadCharts () {
     const query = {}
 
     const testPlanIds = $('#id_test_plan').val()
