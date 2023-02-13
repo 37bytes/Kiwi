@@ -15,7 +15,6 @@ def mailto(  # pylint: disable=invalid-name
     context=None,
     cc=None,
 ):
-
     # make a list with recipients and filter out duplicates
     if isinstance(recipients, list):
         recipients = list(set(recipients))
@@ -43,7 +42,6 @@ def mailto(  # pylint: disable=invalid-name
         target=send_mail,
         args=(settings.EMAIL_SUBJECT_PREFIX + subject, body, sender, recipients),
         kwargs={"fail_silently": False},
+        daemon=True,
     )
-    # This is to tell Python not to wait for the thread to return
-    email_thread.setDaemon(True)
     email_thread.start()

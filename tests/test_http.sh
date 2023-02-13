@@ -4,9 +4,9 @@
 
 assert_up_and_running() {
     sleep 10
-    # both HTTP and HTTPS display the login page
-    rlRun -t -c "curl    -L -o- http://$1:8080/  | grep 'Welcome to Kiwi TCMS'"
-    rlRun -t -c "curl -k -L -o- https://$1:8443/ | grep 'Welcome to Kiwi TCMS'"
+    # HTTP redirects; HTTPS display the login page
+    rlRun -t -c "curl       -o- http://localhost/  | grep '301 Moved Permanently'"
+    rlRun -t -c "curl -k -L -o- https://localhost/ | grep 'Welcome to Kiwi TCMS'"
 }
 
 get_dashboard() {
@@ -14,8 +14,26 @@ get_dashboard() {
     CSRF_TOKEN=$(grep csrftoken /tmp/testcookies.txt | cut -f 7)
     rlRun -t -c "curl -e $1/accounts/login/ -d username=testadmin -d password=password \
         -d csrfmiddlewaretoken=$CSRF_TOKEN -k -L -i -o /tmp/testdata.txt \
-        -b /tmp/testcookies.txt $1/accounts/login/"
+        -b /tmp/testcookies.txt -c /tmp/login-cookies.txt $1/accounts/login/"
     rlAssertGrep "<title>Kiwi TCMS - Dashboard</title>" /tmp/testdata.txt
+}
+
+exec_wrk() {
+    URL=$1
+    LOGS_DIR=$2
+    LOG_BASENAME=$3
+    EXTRA_HEADERS=${4:-"X-Dummy-Header: 1"}
+
+    WRK_FILE="$LOGS_DIR/$LOG_BASENAME.log"
+
+    wrk -d10s -t4 -c4 -H "$EXTRA_HEADERS" "$URL" > "$WRK_FILE"
+
+    TOTAL_REQUESTS=$(grep 'requests in ' "$WRK_FILE" | tr -s ' ' | cut -f2 -d' ')
+    FAILED_REQUESTS=$(grep 'Non-2xx or 3xx responses:' "$WRK_FILE" | tr -d ' ' | cut -f2 -d:)
+    test -z "$FAILED_REQUESTS" && FAILED_REQUESTS="0"
+    COMPLETED_REQUESTS=$((TOTAL_REQUESTS - FAILED_REQUESTS))
+
+    return "$COMPLETED_REQUESTS"
 }
 
 rlJournalStart
@@ -23,35 +41,29 @@ rlJournalStart
         # wait for tear-down from previous script b/c
         # in CI subsequent tests can't find the db host
         sleep 5
-    rlPhaseEnd
 
-    rlPhaseStartTest "Plain HTTP works"
-        rlRun -t -c "docker-compose run -d -e KIWI_DONT_ENFORCE_HTTPS=true --name kiwi_web web /httpd-foreground"
+        WRK_DIR=$(mktemp -d ./wrk-logs-XXXX)
+        chmod go+rwx "$WRK_DIR"
+
+        rlRun -t -c "docker-compose up -d"
         sleep 10
         rlRun -t -c "docker exec -i kiwi_web /Kiwi/manage.py migrate"
-        IP_ADDRESS=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' kiwi_web)
-        assert_up_and_running "$IP_ADDRESS"
+        assert_up_and_running
     rlPhaseEnd
 
     rlPhaseStartTest "Should not display SSL warning for HTTPS connection"
         rlRun -t -c "docker exec -i kiwi_web /Kiwi/manage.py createsuperuser \
             --username testadmin --email testadmin@domain.com --noinput"
         rlRun -t -c "cat tests/set_testadmin_pass.py | docker exec -i kiwi_web /Kiwi/manage.py shell"
-        URL="https://$IP_ADDRESS:8443"
-        get_dashboard "$URL"
-        rlAssertNotGrep "You are not using a secure connection." /tmp/testdata.txt
-    rlPhaseEnd
 
-    rlPhaseStartTest "Should display SSL warning for HTTP connection"
-        URL="http://$IP_ADDRESS:8080"
-        get_dashboard "$URL"
-        rlAssertGrep "You are not using a secure connection." /tmp/testdata.txt
+        get_dashboard "https://localhost"
+        rlAssertNotGrep "You are not using a secure connection." /tmp/testdata.txt
     rlPhaseEnd
 
     rlPhaseStartTest "Should allow file upload with UTF-8 filenames"
         cat > ~/.tcms.conf << _EOF_
 [tcms]
-url = https://$IP_ADDRESS:8443/xml-rpc/
+url = https://localhost/xml-rpc/
 username = testadmin
 password = password
 _EOF_
@@ -60,11 +72,33 @@ _EOF_
     rlPhaseEnd
 
     rlPhaseStartTest "Should send ETag header"
-        rlRun -t -c "curl -k -D- https://$IP_ADDRESS:8443/static/images/kiwi_h20.png 2>/dev/null | grep 'ETag'"
+        rlRun -t -c "curl -k -D- https://localhost/static/images/kiwi_h20.png 2>/dev/null | grep 'ETag'"
     rlPhaseEnd
 
     rlPhaseStartTest "Should NOT send Cache-Control header"
-        rlRun -t -c "curl -k -D- https://$IP_ADDRESS:8443/static/images/kiwi_h20.png 2>/dev/null | grep 'Cache-Control'" 1
+        rlRun -t -c "curl -k -D- https://localhost/static/images/kiwi_h20.png 2>/dev/null | grep 'Cache-Control'" 1
+    rlPhaseEnd
+
+    rlPhaseStartTest "Performance baseline for /accounts/register/"
+        exec_wrk "https://localhost/accounts/login/" "$WRK_DIR" "register-account-page"
+    rlPhaseEnd
+
+    rlPhaseStartTest "Performance baseline for /accounts/login/"
+        exec_wrk "https://localhost/accounts/login/" "$WRK_DIR" "login-page"
+    rlPhaseEnd
+
+    rlPhaseStartTest "Performance baseline for /accounts/passwordreset/"
+        exec_wrk "https://localhost/accounts/login/" "$WRK_DIR" "password-reset-page"
+    rlPhaseEnd
+
+    rlPhaseStartTest "Performance baseline for static file"
+        exec_wrk "https://localhost/static/images/kiwi_h20.png" "$WRK_DIR" "static-image"
+    rlPhaseEnd
+
+    rlPhaseStartTest "Performance baseline for / aka dashboard"
+        # Note: the cookies file is created in get_dashboard() above
+        SESSION_ID=$(grep sessionid /tmp/login-cookies.txt | cut -f 7)
+        exec_wrk "https://localhost/" "$WRK_DIR" "dashboard" "Cookie: sessionid=$SESSION_ID"
     rlPhaseEnd
 
     rlPhaseStartCleanup

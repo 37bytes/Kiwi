@@ -17,6 +17,8 @@ from tcms.kiwi_auth import forms
 from tcms.kiwi_auth.models import UserActivationKey
 from tcms.tests.factories import UserFactory
 
+from . import __FOR_TESTING__
+
 User = get_user_model()  # pylint: disable=invalid-name
 
 
@@ -117,8 +119,8 @@ class TestRegistration(TestCase):
                     self.register_url,
                     {
                         "username": username,
-                        "password1": "password",
-                        "password2": "password",
+                        "password1": __FOR_TESTING__,
+                        "password2": __FOR_TESTING__,
                         "email": "new-tester@example.com",
                         "captcha_0": "PASSED",
                         "captcha_1": "PASSED",
@@ -244,7 +246,7 @@ To activate your account, click this link:
             ),
         )
 
-        for (name, email) in settings.ADMINS:
+        for name, email in settings.ADMINS:
             self.assertContains(
                 response, f'<a href="mailto:{email}">{name}</a>', html=True
             )
@@ -254,8 +256,8 @@ To activate your account, click this link:
             self.register_url,
             {
                 "username": "kiwi-tester",
-                "password1": "password-1",
-                "password2": "password-2",
+                "password1": __FOR_TESTING__,
+                "password2": f"000-{__FOR_TESTING__}",
                 "email": "new-tester@example.com",
             },
             follow=False,
@@ -272,8 +274,8 @@ To activate your account, click this link:
             self.register_url,
             {
                 "username": "test_user",
-                "password1": "password",
-                "password2": "password",
+                "password1": __FOR_TESTING__,
+                "password2": __FOR_TESTING__,
                 "email": "new-tester@example.com",
             },
             follow=False,
@@ -398,8 +400,25 @@ class TestPasswordResetView(TestCase):
         user = User.objects.create_user("kiwi-tester", "tester@example.com", "password")
         user.is_active = True
         user.save()
-        data = {"email": "tester@example.com"}
-        response = self.client.post(self.password_reset_url, data, follow=True)
+
+        try:
+            # https://github.com/mbi/django-simple-captcha/issues/84
+            # pylint: disable=import-outside-toplevel
+            from captcha.conf import settings as captcha_settings
+
+            captcha_settings.CAPTCHA_TEST_MODE = True
+
+            response = self.client.post(
+                self.password_reset_url,
+                {
+                    "email": "tester@example.com",
+                    "captcha_0": "PASSED",
+                    "captcha_1": "PASSED",
+                },
+                follow=True,
+            )
+        finally:
+            captcha_settings.CAPTCHA_TEST_MODE = False
 
         self.assertContains(response, _("Password reset email was sent"))
 
