@@ -79,6 +79,23 @@ _EOF_
         rlRun -t -c "curl -k -D- https://localhost/static/images/kiwi_h20.png 2>/dev/null | grep 'Cache-Control'" 1
     rlPhaseEnd
 
+    rlPhaseStartTest "Should send X-Frame-Options header"
+        rlRun -t -c "curl -k -D- https://localhost 2>/dev/null | grep 'X-Frame-Options: DENY'"
+    rlPhaseEnd
+
+    rlPhaseStartTest "Should send X-Content-Type-Options header"
+        rlRun -t -c "curl -k -D- https://localhost 2>/dev/null | grep 'X-Content-Type-Options: nosniff'"
+    rlPhaseEnd
+
+    rlPhaseStartTest "Should send Content-Security-Policy header"
+        rlRun -t -c "curl -k -D- https://localhost 2>/dev/null | grep $'Content-Security-Policy: script-src \'self\' cdn.crowdin.com;'"
+    rlPhaseEnd
+
+    rlPhaseStartTest "Should not execute inline JavaScript"
+        rlRun -t -c "curl -k --fail https://localhost/uploads/attachments/auth_user/2/inline_javascript.svg"
+        rlRun -t -c "robot tests/ui/test_inline_javascript.robot"
+    rlPhaseEnd
+
     rlPhaseStartTest "Performance baseline for /accounts/register/"
         exec_wrk "https://localhost/accounts/login/" "$WRK_DIR" "register-account-page"
     rlPhaseEnd

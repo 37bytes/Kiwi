@@ -22,10 +22,18 @@ import { pageTelemetryReadyHandler } from '../../telemetry/static/telemetry/js/i
 import { jsonRPC } from './jsonrpc'
 import { initSimpleMDE } from './simplemde_security_override'
 
+function pageInitDBReadyHandler () {
+    $('.js-initialize-btn').click(function () {
+        $(this).button('loading')
+    })
+}
+
 const pageHandlers = {
     'page-bugs-get': pageBugsGetReadyHandler,
     'page-bugs-mutable': pageBugsMutableReadyHandler,
     'page-bugs-search': pageBugsSearchReadyHandler,
+
+    'page-init-db': pageInitDBReadyHandler,
 
     'page-testcases-get': pageTestcasesGetReadyHandler,
     'page-testcases-mutable': pageTestcasesMutableReadyHandler,
@@ -71,8 +79,13 @@ $(() => {
         $('[data-toggle="tooltip"]').tooltip()
     }
 
-    // used by automatically loaded editor widgets
-    window.initSimpleMDE = initSimpleMDE
+    $('.js-simplemde-textarea').each(function () {
+        const fileUploadId = $(this).data('file-upload-id')
+        const uploadField = $(`#${fileUploadId}`)
+
+        // this value is only used in testcases/js/mutable.js
+        window.markdownEditor = initSimpleMDE(this, uploadField)
+    })
 
     // for debugging in browser
     window.jsonRPC = jsonRPC

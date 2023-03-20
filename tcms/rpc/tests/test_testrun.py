@@ -4,6 +4,7 @@ from datetime import datetime
 from xmlrpc.client import Fault as XmlRPCFault
 from xmlrpc.client import ProtocolError
 
+from attachments.models import Attachment
 from django.contrib.auth.models import Permission
 from django.utils.translation import gettext_lazy as _
 from tcms_api import xmlrpc
@@ -591,3 +592,26 @@ class TestUpdatePermission(APIPermissionsTestCase):
     def verify_api_without_permission(self):
         with self.assertRaisesRegex(ProtocolError, "403 Forbidden"):
             self.rpc_client.TestRun.update(self.test_run.pk, self.update_fields)
+
+
+class TestAddAttachmentPermissions(APIPermissionsTestCase):
+    permission_label = "attachments.add_attachment"
+
+    def _fixture_setup(self):
+        super()._fixture_setup()
+
+        self.test_run = TestRunFactory()
+
+    def verify_api_with_permission(self):
+        self.rpc_client.TestRun.add_attachment(
+            self.test_run.pk, "test.txt", "a2l3aXRjbXM="
+        )
+        attachments = Attachment.objects.attachments_for_object(self.test_run)
+        self.assertEqual(len(attachments), 1)
+        self.assertEqual(attachments[0].object_id, str(self.test_run.pk))
+
+    def verify_api_without_permission(self):
+        with self.assertRaisesRegex(ProtocolError, "403 Forbidden"):
+            self.rpc_client.TestRun.add_attachment(
+                self.test_run.pk, "test.txt", "a2l3aXRjbXM="
+            )

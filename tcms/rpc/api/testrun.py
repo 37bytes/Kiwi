@@ -4,6 +4,7 @@ from modernrpc.core import REQUEST_KEY, rpc_method
 
 from tcms.core.utils import form_errors_to_list
 from tcms.management.models import Tag
+from tcms.rpc import utils
 from tcms.rpc.api.forms.testrun import UpdateForm, UserForm
 from tcms.rpc.decorators import permissions_required
 from tcms.testcases.models import TestCase
@@ -22,6 +23,7 @@ __all__ = (
     "add_cc",
     "remove_cc",
     "properties",
+    "add_attachment",
 )
 
 
@@ -393,4 +395,30 @@ def properties(query=None):
         )
         .order_by("run", "name", "value")
         .distinct()
+    )
+
+
+@permissions_required("attachments.add_attachment")
+@rpc_method(name="TestRun.add_attachment")
+def add_attachment(run_id, filename, b64content, **kwargs):
+    """
+    .. function:: RPC TestRun.add_attachment(run_id, filename, b64content)
+
+        Add attachment to the given TestRun.
+
+        :param run_id: PK of TestRun
+        :type run_id: int
+        :param filename: File name of attachment, e.g. 'logs.txt'
+        :type filename: str
+        :param b64content: Base64 encoded content
+        :type b64content: str
+        :param \\**kwargs: Dict providing access to the current request, protocol,
+                entry point name and handler instance from the rpc method
+    """
+    utils.add_attachment(
+        run_id,
+        "testruns.TestRun",
+        kwargs.get(REQUEST_KEY).user,
+        filename,
+        b64content,
     )
